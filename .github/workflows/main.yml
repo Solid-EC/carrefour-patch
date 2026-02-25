@@ -10,26 +10,26 @@ jobs:
         with:
           lfs: true
 
-      - name: Install tools
+      - name: Install insert_dylib
         run: |
           git clone https://github.com/Tyilo/insert_dylib
           cd insert_dylib && xcodebuild && cp build/Release/insert_dylib /usr/local/bin/insert_dylib
+
+      - name: Patch IPA
+        run: |
           curl -L https://github.com/frida/frida/releases/download/17.7.3/frida-gadget-17.7.3-ios-universal.dylib.xz -o gadget.xz
           xz -d gadget.xz
           mv gadget frida-gadget.dylib
-
-      - name: Patch IPA manually
-        run: |
+          ls -la frida-gadget.dylib
           mkdir -p work
-          cp carrefour.ipa work/
-          cd work
-          unzip carrefour.ipa -d app
-          APP=$(ls app/Payload/)
-          BINARY=$(defaults read "$(pwd)/app/Payload/$APP/Info.plist" CFBundleExecutable)
-          mkdir -p "app/Payload/$APP/Frameworks"
-          cp ../frida-gadget.dylib "app/Payload/$APP/Frameworks/FridaGadget.dylib"
-          insert_dylib --strip-codesig --inplace "@executable_path/Frameworks/FridaGadget.dylib" "app/Payload/$APP/$BINARY"
-          cd app && zip -qr ../carrefour-patched.ipa Payload
+          unzip carrefour.ipa -d work/app
+          APP=$(ls work/app/Payload/)
+          BINARY=$(defaults read "$(pwd)/work/app/Payload/$APP/Info.plist" CFBundleExecutable)
+          mkdir -p "work/app/Payload/$APP/Frameworks"
+          cp frida-gadget.dylib "work/app/Payload/$APP/Frameworks/FridaGadget.dylib"
+          insert_dylib --strip-codesig --inplace "@executable_path/Frameworks/FridaGadget.dylib" "work/app/Payload/$APP/$BINARY"
+          cd work/app && zip -qr ../carrefour-patched.ipa Payload
+          ls -la work/*.ipa
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
