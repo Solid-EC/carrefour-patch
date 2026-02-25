@@ -26,11 +26,10 @@ jobs:
           unzip carrefour.ipa -d app
           APP=$(ls app/Payload/)
           BINARY=$(defaults read "$(pwd)/app/Payload/$APP/Info.plist" CFBundleExecutable)
-          cp ../frida-gadget.dylib "app/Payload/$APP/Frameworks/FridaGadget.dylib" 2>/dev/null || (mkdir -p "app/Payload/$APP/Frameworks" && cp ../frida-gadget.dylib "app/Payload/$APP/Frameworks/FridaGadget.dylib")
+          mkdir -p "app/Payload/$APP/Frameworks"
+          cp ../frida-gadget.dylib "app/Payload/$APP/Frameworks/FridaGadget.dylib"
           insert_dylib --strip-codesig --inplace "@executable_path/Frameworks/FridaGadget.dylib" "app/Payload/$APP/$BINARY"
           cd app && zip -qr ../carrefour-patched.ipa Payload
-          cd ..
-          ls -la *.ipa
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
